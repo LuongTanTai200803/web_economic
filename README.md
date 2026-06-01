@@ -2,8 +2,8 @@ web bán giày frontend: Reactjs, call api với axios.
               backend: Springboot
               db:MySQL
 							
-21130371_TranMinhHuong: tên tài khoản là amayafukai
-21130519_LuongTanTai
+21130371_TranMinhHuong: tên tài khoản github là amayafukai
+21130519_LuongTanTai: tên tài khoản github là LuongTanTai200803
 
 database nằm trong thư mục backend file là shoes_store.sql 
 
