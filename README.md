@@ -7,7 +7,7 @@ web bán giày frontend: Reactjs, call api với axios.
 
 database nằm trong thư mục backend file là shoes_store.sql 
 
-**cách sử dụng** **database:** mở MySQL Workbench lên tạo database mới là root mật khẩu là 1 cho đơn giản rồi sau đó import file shoes_store.sql vô là xong phần database.
+**cách sử dụng** **database:** mở MySQL Workbench lên tạo database mới tài khoản là root mật khẩu là 1 cho đơn giản rồi sau đó import file shoes_store.sql vô là xong phần database.
 database còn thiếu nhiều ảnh và nhiều sản phẩm.
 
 **backend:** mở eclipse import maven project thư mục backend
