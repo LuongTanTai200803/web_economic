@@ -49,22 +49,21 @@ public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .cors().and()
-            .csrf().disable()
-            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            .and()
-            .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/products/**").permitAll()
-                .requestMatchers("/api/brands/**").permitAll()
-                .requestMatchers("/api/colors/**").permitAll()
-                .requestMatchers("/api/cart/**").authenticated()
-                .requestMatchers("/api/orders/**").authenticated()
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
-        
+                .cors(cors -> cors.disable())
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(authz -> authz
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/products/**").permitAll()
+                        .requestMatchers("/api/brands/**").permitAll()
+                        .requestMatchers("/api/colors/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers("/api/cart/**").authenticated()
+                        .requestMatchers("/api/orders/**").authenticated()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .anyRequest().authenticated())
+                .addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 }
