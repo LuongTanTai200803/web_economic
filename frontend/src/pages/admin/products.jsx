@@ -1,26 +1,61 @@
-import React, { useState } from 'react';
-import PageBanner from '../components/PageBanner'; // Tận dụng component có sẵn
+import React, { useState, useEffect } from 'react';
+import PageBanner from '../components/PageBanner';
+import api from '../../utils/axiosConfig';
 
 export default function AdminProducts() {
-  // 1. Dữ liệu mẫu ban đầu (Mock Data)
-  const [products, setProducts] = useState([
-    { id: 1, name: 'Giày Thể Thao Nam', price: 550000, category: 'Giày Dép', image: 'https://via.placeholder.com/80' },
-    { id: 2, name: 'Áo Thun Cotton', price: 250000, category: 'Quần Áo', image: 'https://via.placeholder.com/80' },
-    { id: 3, name: 'Balo Thời Trang', price: 400000, category: 'Phụ Kiện', image: 'https://via.placeholder.com/80' },
-  ]);
-
-  // 2. State quản lý Modal và Form
+  const [products, setProducts] = useState([]);
+  const [brands, setBrands] = useState([]);
+  const [colors, setColors] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({ name: '', price: '', category: '', image: '' });
+  const [formData, setFormData] = useState({
+    name: '', description: '', price: '', stock: '', brandId: '', colorId: '', imageUrl: ''
+  });
 
-  // 3. Các hàm xử lý (Handlers)
+  // Load dữ liệu
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/products?size=100'); // lấy nhiều
+      setProducts(res.data.content);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchBrandsColors = async () => {
+    const [brandRes, colorRes] = await Promise.all([
+      api.get('/brands'),
+      api.get('/colors')
+    ]);
+    setBrands(brandRes.data);
+    setColors(colorRes.data);
+  };
+
+  useEffect(() => {
+    fetchProducts();
+    fetchBrandsColors();
+  }, []);
+
   const handleOpenModal = (product = null) => {
     if (product) {
-      setFormData(product);
+      setFormData({
+        name: product.name,
+        description: product.description || '',
+        price: product.price,
+        stock: product.stock,
+        brandId: product.brand?.id || '',
+        colorId: product.color?.id || '',
+        imageUrl: product.imageUrl || ''
+      });
       setEditingId(product.id);
     } else {
-      setFormData({ name: '', price: '', category: '', image: '' });
+      setFormData({
+        name: '', description: '', price: '', stock: '', brandId: '', colorId: '', imageUrl: ''
+      });
       setEditingId(null);
     }
     setIsModalOpen(true);
@@ -28,192 +63,100 @@ export default function AdminProducts() {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setFormData({ name: '', price: '', category: '', image: '' });
+    setEditingId(null);
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    if (editingId) {
-      // Cập nhật sản phẩm (Edit)
-      setProducts(products.map(p => p.id === editingId ? { ...formData, id: editingId } : p));
-    } else {
-      // Thêm sản phẩm mới (Add)
-      const newProduct = { 
-        ...formData, 
-        id: Date.now(), 
-        price: Number(formData.price) || 0 
-      };
-      setProducts([...products, newProduct]);
+    try {
+      if (editingId) {
+        await api.put(`/admin/products/${editingId}`, formData);
+      } else {
+        await api.post('/admin/products', formData);
+      }
+      fetchProducts();
+      handleCloseModal();
+    } catch (err) {
+      console.error('Lưu sản phẩm thất bại:', err);
     }
-    handleCloseModal();
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
-      setProducts(products.filter(p => p.id !== id));
+  const handleDelete = async (id) => {
+    if (!window.confirm('Xóa sản phẩm này?')) return;
+    try {
+      await api.delete(`/admin/products/${id}`);
+      fetchProducts();
+    } catch (err) {
+      console.error('Xóa thất bại:', err);
     }
   };
+
+  if (loading) return <div>Đang tải...</div>;
 
   return (
     <>
       <PageBanner page="Sản Phẩm" header="Quản Lý Sản Phẩm" />
+      <div className="container mt-4">
+        <button className="btn btn-primary mb-3" onClick={() => handleOpenModal()}>
+          + Thêm sản phẩm
+        </button>
+        <table className="table table-bordered">
+          <thead>
+            <tr><th>ID</th><th>Tên</th><th>Giá</th><th>Tồn kho</th><th>Thương hiệu</th><th>Màu</th><th>Hành động</th></tr>
+          </thead>
+          <tbody>
+            {products.map(p => (
+              <tr key={p.id}>
+                <td>{p.id}</td><td>{p.name}</td><td>{p.price.toLocaleString('vi-VN')}đ</td>
+                <td>{p.stock}</td><td>{p.brand?.name}</td><td>{p.color?.name}</td>
+                <td>
+                  <button className="btn btn-sm btn-warning" onClick={() => handleOpenModal(p)}>Sửa</button>
+                  <button className="btn btn-sm btn-danger ms-2" onClick={() => handleDelete(p.id)}>Xóa</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-      <section className="admin_dashboard_area section_gap">
-        <div className="container">
-          
-          {/* Header & Nút Thêm Mới */}
-          <div className="row mb-4 align-items-center">
-            <div className="col-md-6">
-              <h3 style={{ color: '#222', fontWeight: '600', margin: 0 }}>Danh sách sản phẩm</h3>
-            </div>
-            <div className="col-md-6 text-right">
-              <button 
-                className="primary-btn" 
-                style={{ border: 'none', cursor: 'pointer', padding: '0px 30px', lineHeight: '40px' }}
-                onClick={() => handleOpenModal()}
-              >
-                + Thêm Sản Phẩm
-              </button>
-            </div>
-          </div>
-
-          {/* Bảng Danh Sách Sản Phẩm */}
-          <div className="row">
-            <div className="col-12">
-              <div className="table-responsive" style={{ background: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 5px 15px rgba(0,0,0,0.05)' }}>
-                <table className="table table-striped align-middle">
-                  <thead style={{ background: '#f8f9fa' }}>
-                    <tr>
-                      <th>ID</th>
-                      <th>Hình ảnh</th>
-                      <th>Tên sản phẩm</th>
-                      <th>Danh mục</th>
-                      <th>Giá (VNĐ)</th>
-                      <th className="text-center">Hành động</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {products.length > 0 ? (
-                      products.map((product) => (
-                        <tr key={product.id}>
-                          <td>#{product.id.toString().slice(-4)}</td>
-                          <td>
-                            <img src={product.image} alt={product.name} style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px' }} />
-                          </td>
-                          <td style={{ fontWeight: '500' }}>{product.name}</td>
-                          <td>{product.category}</td>
-                          <td>{Number(product.price).toLocaleString('vi-VN')} đ</td>
-                          <td className="text-center">
-                            <button 
-                              className="btn btn-sm btn-outline-primary mr-2" 
-                              onClick={() => handleOpenModal(product)}
-                              style={{ marginRight: '8px' }}
-                            >
-                              <i className="lnr lnr-pencil"></i> Sửa
-                            </button>
-                            <button 
-                              className="btn btn-sm btn-outline-danger" 
-                              onClick={() => handleDelete(product.id)}
-                            >
-                              <i className="lnr lnr-trash"></i> Xóa
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="6" className="text-center py-4 text-muted">Chưa có sản phẩm nào.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      {/* Modal Thêm/Sửa Sản Phẩm (Inline Custom Modal) */}
+      {/* Modal thêm/sửa (giữ nguyên style từ file gốc) */}
       {isModalOpen && (
-        <div className="custom-modal-overlay">
-          <div className="custom-modal-content">
-            <div className="modal-header d-flex justify-content-between align-items-center mb-3">
-              <h4 style={{ margin: 0 }}>{editingId ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm mới'}</h4>
-              <button className="close-btn" onClick={handleCloseModal}>&times;</button>
+        <div className="modal show d-block" tabIndex="-1">
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5>{editingId ? 'Cập nhật' : 'Thêm mới'} sản phẩm</h5>
+                <button type="button" className="btn-close" onClick={handleCloseModal}></button>
+              </div>
+              <form onSubmit={handleSave}>
+                <div className="modal-body">
+                  <input className="form-control mb-2" name="name" placeholder="Tên sản phẩm" value={formData.name} onChange={handleChange} required />
+                  <textarea className="form-control mb-2" name="description" placeholder="Mô tả" value={formData.description} onChange={handleChange} />
+                  <input className="form-control mb-2" type="number" name="price" placeholder="Giá" value={formData.price} onChange={handleChange} required />
+                  <input className="form-control mb-2" type="number" name="stock" placeholder="Tồn kho" value={formData.stock} onChange={handleChange} required />
+                  <select className="form-control mb-2" name="brandId" value={formData.brandId} onChange={handleChange} required>
+                    <option value="">Chọn thương hiệu</option>
+                    {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                  </select>
+                  <select className="form-control mb-2" name="colorId" value={formData.colorId} onChange={handleChange} required>
+                    <option value="">Chọn màu sắc</option>
+                    {colors.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                  <input className="form-control mb-2" name="imageUrl" placeholder="URL ảnh" value={formData.imageUrl} onChange={handleChange} />
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>Hủy</button>
+                  <button type="submit" className="btn btn-primary">Lưu</button>
+                </div>
+              </form>
             </div>
-            
-            <form onSubmit={handleSave}>
-              <div className="form-group mb-3">
-                <label>Tên sản phẩm</label>
-                <input type="text" className="form-control" name="name" value={formData.name} onChange={handleChange} required />
-              </div>
-              <div className="form-group mb-3">
-                <label>Giá (VNĐ)</label>
-                <input type="number" className="form-control" name="price" value={formData.price} onChange={handleChange} required />
-              </div>
-              <div className="form-group mb-3">
-                <label>Danh mục</label>
-                <select className="form-control" name="category" value={formData.category} onChange={handleChange} required>
-                  <option value="">-- Chọn danh mục --</option>
-                  <option value="Giày Dép">Giày Dép</option>
-                  <option value="Quần Áo">Quần Áo</option>
-                  <option value="Phụ Kiện">Phụ Kiện</option>
-                </select>
-              </div>
-              <div className="form-group mb-4">
-                <label>Link Hình Ảnh (URL)</label>
-                <input type="text" className="form-control" name="image" value={formData.image} onChange={handleChange} placeholder="https://..." required />
-              </div>
-              
-              <div className="text-right mt-4">
-                <button type="button" className="btn btn-secondary mr-2" onClick={handleCloseModal} style={{ marginRight: '10px' }}>Hủy</button>
-                <button type="submit" className="primary-btn" style={{ border: 'none', padding: '0px 20px', lineHeight: '38px' }}>
-                  {editingId ? 'Cập nhật' : 'Lưu sản phẩm'}
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}
-
-      {/* CSS cho Custom Modal và các chi tiết nhỏ */}
-      <style jsx>{`
-        .text-right { text-align: right; }
-        .custom-modal-overlay {
-          position: fixed;
-          top: 0; left: 0; right: 0; bottom: 0;
-          background: rgba(0, 0, 0, 0.5);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 9999;
-        }
-        .custom-modal-content {
-          background: #fff;
-          padding: 30px;
-          border-radius: 8px;
-          width: 100%;
-          max-width: 500px;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-        .close-btn {
-          background: transparent;
-          border: none;
-          font-size: 24px;
-          line-height: 1;
-          cursor: pointer;
-          color: #999;
-        }
-        .close-btn:hover {
-          color: #333;
-        }
-      `}</style>
     </>
   );
 }

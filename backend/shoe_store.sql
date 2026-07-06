@@ -113,3 +113,5 @@ CREATE INDEX idx_product_color ON products(color_id);
 CREATE INDEX idx_product_name ON products(name);
 CREATE INDEX idx_order_user ON orders(user_id);
 CREATE INDEX idx_cart_user ON cart_items(user_id);
+
+INSERT INTO users (username, password, email, role) VALUES ('admin1', '$2a$10$N.Zu9eKkX5Xy9MxQmYqUOeZbKcLdEfGhIjKlMnOpQrStUvWxYzA', 'admin1@example.com', 'ADMIN');
