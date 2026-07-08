@@ -146,6 +146,32 @@ export default function Navbar() {
                       </li> */}
                     </ul>
                   </li>
+                  <li className="nav-item">
+                    <Link className="nav-link" href="/orders">
+                      Đơn hàng của tôi
+                    </Link>
+                  </li>
+
+                        {role === 'ADMIN' && (
+                              <li className="nav-item submenu dropdown">
+                            <a className="nav-link dropdown-toggle" data-toggle="dropdown">
+                              Quản trị
+                            </a>
+                            <ul className="dropdown-menu">
+                              <li className="nav-item">
+                                <Link className="nav-link" href="/admin/products">Sản phẩm</Link>
+                              </li>
+                              <li className="nav-item">
+                                <Link className="nav-link" href="/admin/orders">Đơn hàng</Link>
+                              </li>
+                              <li className="nav-item">
+                                <Link className="nav-link" href="/admin">Dashboard</Link>
+                              </li>
+                            </ul>
+                          </li>
+)}
+
+
 
                         {role === 'ADMIN' && (
                               <li className="nav-item submenu dropdown">
@@ -177,7 +203,7 @@ export default function Navbar() {
 
                 <ul className="nav navbar-nav navbar-right">
                   <li className="nav-item">
-                    <a href="#" className="cart">
+                    <a href="/orders" className="cart">
                       <span className="ti-bag" />
                     </a>
                   </li>

@@ -70,14 +70,29 @@ public class WebSecurityConfig {
 				.csrf(csrf -> csrf.disable())
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(authz -> authz
-						// Cho phép preflight OPTIONS request mà không cần xác thực
-						.requestMatchers(org.springframework.security.web.util.matcher.AntPathRequestMatcher
-								.antMatcher(org.springframework.http.HttpMethod.OPTIONS, "/**"))
-						.permitAll().requestMatchers("/api/auth/**").permitAll().requestMatchers("/api/products/**")
-						.permitAll().requestMatchers("/api/brands/**").permitAll().requestMatchers("/api/colors/**")
-						.permitAll().requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
-						.permitAll().requestMatchers("/api/cart/**").authenticated().requestMatchers("/api/orders/**")
-						.authenticated().requestMatchers("/api/admin/**").hasRole("ADMIN").anyRequest().authenticated())
+
+					.requestMatchers(org.springframework.security.web.util.matcher.AntPathRequestMatcher
+							.antMatcher(org.springframework.http.HttpMethod.OPTIONS, "/**"))
+					.permitAll()
+
+					.requestMatchers("/api/auth/**").permitAll()
+					.requestMatchers("/api/products/**").permitAll()
+					.requestMatchers("/api/brands/**").permitAll()
+					.requestMatchers("/api/colors/**").permitAll()
+					.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+
+					// VNPay return/callback không có JWT nên phải public
+					.requestMatchers("/api/payments/vnpay-return").permitAll()
+
+					.requestMatchers("/api/cart/**").authenticated()
+					.requestMatchers("/api/orders/**").fullyAuthenticated()
+
+					// nhớ có /**, không phải chỉ /api/payments
+					.requestMatchers("/api/payments/**").authenticated()
+
+					.requestMatchers("/api/admin/**").hasRole("ADMIN")
+					.anyRequest().authenticated())
+
 				.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 
 		return http.build();

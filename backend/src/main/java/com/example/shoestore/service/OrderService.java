@@ -1,8 +1,17 @@
 package com.example.shoestore.service;
 
+<<<<<<< HEAD
 import com.example.shoestore.dto.OrderRequest;
 import com.example.shoestore.entity.*;
 import com.example.shoestore.repository.*;
+=======
+import com.example.shoestore.controller.AdminController;
+import com.example.shoestore.dto.OrderRequest;
+import com.example.shoestore.entity.*;
+import com.example.shoestore.repository.*;
+
+
+>>>>>>> 17f3e01 (hoan thien chuc nang thanh toan va lich su don hang)
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,7 +21,12 @@ import java.util.List;
 @Service
 public class OrderService {
 
+<<<<<<< HEAD
 	@Autowired
+=======
+	private final AdminController adminController;
+    @Autowired
+>>>>>>> 17f3e01 (hoan thien chuc nang thanh toan va lich su don hang)
 	private OrderRepository orderRepository;
 	@Autowired
 	private OrderItemRepository orderItemRepository;
@@ -22,6 +36,15 @@ public class OrderService {
 	private UserRepository userRepository;
 	@Autowired
 	private ProductRepository productRepository;
+<<<<<<< HEAD
+=======
+	@Autowired
+	private PaymentRepository paymentRepository;
+
+    OrderService(AdminController adminController) {
+        this.adminController = adminController;
+    }
+>>>>>>> 17f3e01 (hoan thien chuc nang thanh toan va lich su don hang)
 
 	@Transactional
 	public Order createOrder(Integer userId, OrderRequest request) {
@@ -47,13 +70,34 @@ public class OrderService {
 		order.setShippingAddress(request.getShippingAddress());
 		order.setPhone(request.getPhone());
 		order.setPaymentMethod(request.getPaymentMethod());
-		orderRepository.save(order);
+
+		order.setPaymentStatus(Order.OrderPaymentStatus.UNPAID);
+		Order savedOrder = orderRepository.save(order);
+
+		// Tạo payment
+		Payment payment = new Payment();
+
+		payment.setOrder(savedOrder);
+		payment.setPaymentMethod(request.getPaymentMethod());
+		payment.setAmount(savedOrder.getTotalAmount());
+		payment.setStatus(Payment.PaymentTransactionStatus.PENDING);
+
+		if ("COD".equalsIgnoreCase(request.getPaymentMethod())) {
+			payment.setProvider("COD");
+		} else if ("VNPAY".equalsIgnoreCase(request.getPaymentMethod())) {
+			payment.setProvider("VNPAY");
+		}
+
+		paymentRepository.save(payment);
+
 
 		// Tạo từng order item
 		for (CartItem cartItem : cartItems) {
 			Product product = cartItem.getProduct();
 			OrderItem orderItem = new OrderItem();
-			orderItem.setOrder(order);
+
+			orderItem.setOrder(savedOrder);
+
 			orderItem.setProduct(product);
 			orderItem.setQuantity(cartItem.getQuantity());
 			orderItem.setPrice(product.getPrice());
@@ -63,7 +107,9 @@ public class OrderService {
 		// Xóa toàn bộ giỏ hàng
 		cartItemRepository.deleteByUserId(userId);
 
-		return order;
+
+		return savedOrder;
+
 	}
 
 	public List<Order> getOrdersByUserId(Integer userId) {

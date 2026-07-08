@@ -10,11 +10,11 @@ export default function PageBanner({header,page}) {
         <div className="col-first">
           <h1>{header}</h1>
           <nav className="d-flex align-items-center">
-            <a href="index.html">
+            <a href="/">
               Home
               <span className="lnr lnr-arrow-right" />
             </a>
-            <a href="category.html">{page}</a>
+            <a href="/category">{page}</a>
           </nav>
         </div>
       </div>
