@@ -1,7 +1,5 @@
-package com.example.shoestore.config;
+package com.example.shoestore.config; // Xem lại và sửa đúng tên package của dự án bạn nếu cần
 
-import com.example.shoestore.security.JwtAuthenticationFilter;
-import com.example.shoestore.security.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +16,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import com.example.shoestore.service.UserDetailsServiceImpl; // Sửa lại đúng package của bạn
+import com.example.shoestore.config.JwtAuthenticationFilter; // Sửa lại đúng package của bạn
 
 import java.util.Arrays;
 
@@ -70,27 +70,25 @@ public class WebSecurityConfig {
 				.csrf(csrf -> csrf.disable())
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(authz -> authz
-					// Cho phép preflight OPTIONS request mà không cần xác thực
 					.requestMatchers(org.springframework.security.web.util.matcher.AntPathRequestMatcher
 							.antMatcher(org.springframework.http.HttpMethod.OPTIONS, "/**"))
 					.permitAll()
 
-					// Các API công khai (Public)
 					.requestMatchers("/api/auth/**").permitAll()
 					.requestMatchers("/api/products/**").permitAll()
 					.requestMatchers("/api/brands/**").permitAll()
 					.requestMatchers("/api/colors/**").permitAll()
 					.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-					
-					// VNPay return/callback không có JWT nên phải công khai
+
+					// VNPay return/callback không có JWT nên phải public
 					.requestMatchers("/api/payments/vnpay-return").permitAll()
 
-					// Các API yêu cầu đăng nhập (Private)
 					.requestMatchers("/api/cart/**").authenticated()
-					.requestMatchers("/api/orders/**").authenticated() // Hoặc .fullyAuthenticated() tùy bạn chọn
+					.requestMatchers("/api/orders/**").fullyAuthenticated()
+
+					// nhớ có /**, không phải chỉ /api/payments
 					.requestMatchers("/api/payments/**").authenticated()
 
-					// API dành riêng cho Admin
 					.requestMatchers("/api/admin/**").hasRole("ADMIN")
 					.anyRequest().authenticated())
 				.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
