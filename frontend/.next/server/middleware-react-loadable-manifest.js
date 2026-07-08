@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST="{\"pages/product_detail.jsx -> react-owl-carousel\":{\"id\":\"pages/product_detail.jsx -> react-owl-carousel\",\"files\":[\"static/chunks/node_modules_react-owl-carousel_umd_OwlCarousel_js.js\"]}}"
+self.__REACT_LOADABLE_MANIFEST="{}"
