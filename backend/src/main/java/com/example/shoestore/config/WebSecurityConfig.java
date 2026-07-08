@@ -70,25 +70,27 @@ public class WebSecurityConfig {
 				.csrf(csrf -> csrf.disable())
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(authz -> authz
+					// Cho phép preflight OPTIONS request mà không cần xác thực
 					.requestMatchers(org.springframework.security.web.util.matcher.AntPathRequestMatcher
 							.antMatcher(org.springframework.http.HttpMethod.OPTIONS, "/**"))
 					.permitAll()
 
+					// Các API công khai (Public)
 					.requestMatchers("/api/auth/**").permitAll()
 					.requestMatchers("/api/products/**").permitAll()
 					.requestMatchers("/api/brands/**").permitAll()
 					.requestMatchers("/api/colors/**").permitAll()
 					.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-
-					// VNPay return/callback không có JWT nên phải public
+					
+					// VNPay return/callback không có JWT nên phải công khai
 					.requestMatchers("/api/payments/vnpay-return").permitAll()
 
+					// Các API yêu cầu đăng nhập (Private)
 					.requestMatchers("/api/cart/**").authenticated()
-					.requestMatchers("/api/orders/**").fullyAuthenticated()
-
-					// nhớ có /**, không phải chỉ /api/payments
+					.requestMatchers("/api/orders/**").authenticated() // Hoặc .fullyAuthenticated() tùy bạn chọn
 					.requestMatchers("/api/payments/**").authenticated()
 
+					// API dành riêng cho Admin
 					.requestMatchers("/api/admin/**").hasRole("ADMIN")
 					.anyRequest().authenticated())
 				.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);

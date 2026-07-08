@@ -1,12 +1,51 @@
-# Front-end
-**/node_modules/
-**/build/
-**/.env.local
+# =========================================================================
+# 1. BACKEND (Spring Boot) - Áp dụng cho code nằm trong thư mục backend/
+# =========================================================================
+backend/target/
+backend/.mvn/
+backend/pom.xml.tag
+backend/pom.xml.releaseBackup
+backend/pom.xml.versionsBackup
+backend/pom.xml.next
+backend/release.properties
+backend/dependency-reduced-pom.xml
+backend/build_isolated/
+backend/.apt_generated/
+backend/.classpath
+backend/.factorypath
+backend/.project
+backend/.settings/
+backend/.springBeans
+backend/.sts4-cache/
 
-# Back-end (Spring Boot & Eclipse)
-**/target/
-**/.classpath
-**/.project
-**/.settings/
-**/.factorypathfrontend/.next/
+# =========================================================================
+# 2. FRONTEND (ReactJS / Next.js) - Áp dụng cho thư mục frontend/
+# =========================================================================
 frontend/.next/
+frontend/node_modules/
+frontend/build/
+frontend/dist/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/.pnp/
+frontend/.pnp.js
+frontend/coverage/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.docusaurus/
+frontend/.turbo/
+
+# =========================================================================
+# 3. COMMON IDEs (Các trình soạn thảo mã nguồn dùng chung)
+# =========================================================================
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+.DS_Store
+Thumbs.db
+HELP.md
