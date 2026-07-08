@@ -49,14 +49,20 @@ export default function Checkout() {
     e.preventDefault();
     setSubmitting(true);
 
+<<<<<<< HEAD
     // Kiểm tra thông tin bắt buộc
+=======
+>>>>>>> 17f3e01 (hoan thien chuc nang thanh toan va lich su don hang)
     if (!formData.phone || !formData.address) {
       alert('Vui lòng nhập số điện thoại và địa chỉ giao hàng');
       setSubmitting(false);
       return;
     }
 
+<<<<<<< HEAD
     // Tạo payload theo đúng yêu cầu của backend OrderRequest
+=======
+>>>>>>> 17f3e01 (hoan thien chuc nang thanh toan va lich su don hang)
     const payload = {
       shippingAddress: `${formData.address}, ${formData.city || ''}`,
       phone: formData.phone,
@@ -64,6 +70,7 @@ export default function Checkout() {
     };
 
     try {
+<<<<<<< HEAD
       const response = await api.post('/orders', payload);
       // Đặt hàng thành công, chuyển sang trang xác nhận với orderId
       const orderId = response.data.id;
@@ -71,6 +78,39 @@ export default function Checkout() {
     } catch (err) {
       console.error('Lỗi đặt hàng:', err);
       alert(err.response?.data || 'Đặt hàng thất bại, vui lòng thử lại');
+=======
+      const orderRes = await api.post('/orders', payload);
+      const orderId = orderRes.data?.id;
+
+      if (!orderId) {
+        throw new Error('Không lấy được orderId từ response tạo đơn');
+      }
+
+      if (formData.paymentMethod === 'VNPAY') {
+        const payRes = await api.post(`/payments/${orderId}/vnpay-url`);
+        const paymentUrl =
+          payRes.data?.paymentUrl ||
+          payRes.data?.url ||
+          payRes.data?.redirectUrl ||
+          (typeof payRes.data === 'string' ? payRes.data : '');
+
+        if (!paymentUrl) {
+          throw new Error('Backend không trả về paymentUrl');
+        }
+
+        window.location.href = paymentUrl;
+        return;
+      }
+
+      router.push(`/confirmation?orderId=${orderId}`);
+    } catch (err) {
+      console.error('Lỗi đặt hàng / tạo link thanh toán:', err);
+      const message =
+        err.response?.data?.message ||
+        err.message ||
+        'Đặt hàng thất bại, vui lòng thử lại';
+      alert(message);
+>>>>>>> 17f3e01 (hoan thien chuc nang thanh toan va lich su don hang)
     } finally {
       setSubmitting(false);
     }
@@ -228,9 +268,15 @@ export default function Checkout() {
                       <input
                         type="radio"
                         name="paymentMethod"
+<<<<<<< HEAD
                         value="BANKING"
                         checked={formData.paymentMethod === 'BANKING'}
                         onChange={() => setFormData({ ...formData, paymentMethod: 'BANKING' })}
+=======
+                        value="VNPAY"
+                        checked={formData.paymentMethod === 'VNPAY'}
+                        onChange={() => setFormData({ ...formData, paymentMethod: 'VNPAY' })}
+>>>>>>> 17f3e01 (hoan thien chuc nang thanh toan va lich su don hang)
                       />
                       Chuyển khoản ngân hàng
                     </label>
