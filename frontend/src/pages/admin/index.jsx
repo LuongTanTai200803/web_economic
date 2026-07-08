@@ -1,109 +1,93 @@
 import React, { useState, useEffect } from 'react';
-import PageBanner from '../components/PageBanner'; // Tận dụng component Banner có sẵn của bạn
+import PageBanner from '../components/PageBanner';
+import api from '../../utils/axiosConfig';
 
 export default function AdminDashboard() {
-  // Trạng thái lưu trữ số liệu thống kê
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalOrders: 0,
     revenue: 0,
     pendingOrders: 0
   });
+  const [loading, setLoading] = useState(true);
 
-  // Giả lập gọi dữ liệu từ API hoặc Cấu trúc dữ liệu của bạn
   useEffect(() => {
-    // Khi tích hợp Backend, hãy thay thế đoạn mock data này bằng fetch/axios
-    const loadDashboardData = async () => {
-      setStats({
-        totalProducts: 1240,    // Tổng số sản phẩm trong shop
-        totalOrders: 856,       // Tổng số đơn hàng
-        revenue: 145200000,     // Tổng tiền bán được (VNĐ)
-        pendingOrders: 18       // Số đơn đang chờ xử lý
-      });
+    const loadStats = async () => {
+      try {
+        const res = await api.get('/admin/stats');
+        setStats(prev => ({
+          ...prev,
+          totalOrders: res.data.totalOrders,
+          revenue: res.data.totalRevenue,
+          pendingOrders: res.data.pendingOrders
+        }));
+        // Lấy tổng số sản phẩm
+        const productRes = await api.get('/products?size=1');
+        setStats(prev => ({ ...prev, totalProducts: productRes.data.totalElements }));
+      } catch (err) {
+        console.error('Lỗi tải thống kê:', err);
+      } finally {
+        setLoading(false);
+      }
     };
-
-    loadDashboardData();
+    loadStats();
   }, []);
 
+  if (loading) return <div>Đang tải...</div>;
   return (
     <>
-      {/* Tận dụng PageBanner giống các trang khác của bạn */}
       <PageBanner page="Khu vực quản trị" header="Bảng điều khiển - Dashboard" />
-
       <section className="admin_dashboard_area section_gap">
         <div className="container">
-          
-          <div className="row mb-4">
+          <div className="row">
             <div className="col-12">
               <h3 style={{ color: '#222', fontWeight: '600', marginBottom: '25px' }}>
                 Thống kê hệ thống
               </h3>
             </div>
           </div>
-
-          {/* HÀNG HIỂN THỊ 4 THÀNH PHẦN CARD */}
           <div className="row">
-            
-            {/* 1. Total Products */}
+            {/* Tổng sản phẩm */}
             <div className="col-lg-3 col-md-6 mb-4">
               <div className="dashboard_card card_products">
-                <div className="card_icon">
-                  <i className="lnr lnr-layers"></i> {/* Tận dụng Linearicons sẵn có trong template của bạn */}
-                </div>
+                <div className="card_icon"><i className="lnr lnr-layers"></i></div>
                 <div className="card_info">
                   <p className="card_title">Total Products</p>
                   <h3 className="card_value">{stats.totalProducts.toLocaleString('vi-VN')}</h3>
-                  <span className="card_desc">Tổng số sản phẩm trong shop</span>
                 </div>
               </div>
             </div>
-
-            {/* 2. Total Orders */}
+            {/* Tổng đơn hàng */}
             <div className="col-lg-3 col-md-6 mb-4">
               <div className="dashboard_card card_orders">
-                <div className="card_icon">
-                  <i className="lnr lnr-cart"></i>
-                </div>
+                <div className="card_icon"><i className="lnr lnr-cart"></i></div>
                 <div className="card_info">
                   <p className="card_title">Total Orders</p>
                   <h3 className="card_value">{stats.totalOrders.toLocaleString('vi-VN')}</h3>
-                  <span className="card_desc">Tổng số đơn hàng thành công</span>
                 </div>
               </div>
             </div>
-
-            {/* 3. Revenue */}
+            {/* Doanh thu */}
             <div className="col-lg-3 col-md-6 mb-4">
               <div className="dashboard_card card_revenue">
-                <div className="card_icon">
-                  <i className="lnr lnr-chart-bars"></i>
-                </div>
+                <div className="card_icon"><i className="lnr lnr-chart-bars"></i></div>
                 <div className="card_info">
                   <p className="card_title">Revenue</p>
-                  <h3 className="card_value">{stats.revenue.toLocaleString('vi-VN')} đ</h3>
-                  <span className="card_desc">Tổng tiền bán được</span>
+                  <h3 className="card_value">{stats.revenue.toLocaleString('vi-VN')}đ</h3>
                 </div>
               </div>
             </div>
-
-            {/* 4. Pending Orders */}
+            {/* Đơn chờ xử lý */}
             <div className="col-lg-3 col-md-6 mb-4">
               <div className="dashboard_card card_pending">
-                <div className="card_icon">
-                  <i className="lnr lnr-sync"></i>
-                </div>
+                <div className="card_icon"><i className="lnr lnr-sync"></i></div>
                 <div className="card_info">
                   <p className="card_title">Pending Orders</p>
-                  <h3 className="card_value" style={{ color: '#ffc107' }}>{stats.pendingOrders.toLocaleString('vi-VN')}</h3>
-                  <span className="card_desc">Số đơn đang chờ xử lý</span>
+                  <h3 className="card_value">{stats.pendingOrders.toLocaleString('vi-VN')}</h3>
                 </div>
               </div>
             </div>
-
           </div>
-
-          {/* Bạn có thể thêm bảng danh sách đơn hàng mới nhất hoặc sản phẩm bán chạy ở dưới này bằng cấu trúc table có sẵn của bạn */}
-          
         </div>
       </section>
 

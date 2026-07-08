@@ -75,6 +75,30 @@ CREATE TABLE order_items (
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT
 );
+-- 8 . Bảng payments (thanh toán)
+CREATE TABLE payments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+
+    payment_method VARCHAR(50) NOT NULL,
+    amount DECIMAL(12,0) NOT NULL,
+    status ENUM('PENDING', 'SUCCESS', 'FAILED', 'CANCELLED') DEFAULT 'PENDING',
+
+    provider VARCHAR(50) DEFAULT 'VNPAY',
+    transaction_code VARCHAR(100),
+    provider_transaction_id VARCHAR(100),
+
+    vnp_txn_ref VARCHAR(100) UNIQUE,
+    vnp_response_code VARCHAR(20),
+    vnp_bank_code VARCHAR(50),
+    vnp_pay_date VARCHAR(20),
+
+    paid_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+);
 
 -- ========== DỮ LIỆU MẪU (để demo) ==========
 
@@ -113,3 +137,5 @@ CREATE INDEX idx_product_color ON products(color_id);
 CREATE INDEX idx_product_name ON products(name);
 CREATE INDEX idx_order_user ON orders(user_id);
 CREATE INDEX idx_cart_user ON cart_items(user_id);
+
+INSERT INTO users (username, password, email, role) VALUES ('admin1', '$2a$10$N.Zu9eKkX5Xy9MxQmYqUOeZbKcLdEfGhIjKlMnOpQrStUvWxYzA', 'admin1@example.com', 'ADMIN');

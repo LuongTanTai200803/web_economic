@@ -24,6 +24,7 @@ export default function Login() {
       localStorage.setItem('token', token);
       localStorage.setItem('userId', userId);
       localStorage.setItem('role', role);
+      window.dispatchEvent(new Event('storage'));// Kích hoạt sự kiện storage
       if (remember) {
         localStorage.setItem('rememberUsername', username);
       } else {

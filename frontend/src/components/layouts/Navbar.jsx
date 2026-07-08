@@ -4,6 +4,8 @@ import Link from 'next/link';
 
 export default function Navbar() {
   const [isSticky, setIsSticky] = useState(false);
+  const [role, setRole] = useState(null); // thêm dòng này
+
 
   useEffect(() => {
     const handleScroll = () => {
@@ -14,6 +16,18 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+ useEffect(() => {
+  const userRole = localStorage.getItem('role');
+  setRole(userRole);
+
+  const handleStorageChange = () => {
+    setRole(localStorage.getItem('role'));
+  };
+
+  window.addEventListener('storage', handleStorageChange);
+  return () => window.removeEventListener('storage', handleStorageChange);
+}, []);
+  
   useEffect(() => {
     $("#search_input_box").hide();
 
@@ -25,13 +39,14 @@ export default function Navbar() {
     $("#close_search").on("click", function () {
       $('#search_input_box').slideUp(500);
     });
-
+    
     return () => {
       $("#search").off("click");
       $("#close_search").off("click");
     };
   }, []);
 
+ 
   return (
     <div
       id="undefined-sticky-wrapper"
@@ -131,6 +146,32 @@ export default function Navbar() {
                       </li> */}
                     </ul>
                   </li>
+                  <li className="nav-item">
+                    <Link className="nav-link" href="/orders">
+                      Đơn hàng của tôi
+                    </Link>
+                  </li>
+
+                        {role === 'ADMIN' && (
+                              <li className="nav-item submenu dropdown">
+                            <a className="nav-link dropdown-toggle" data-toggle="dropdown">
+                              Quản trị
+                            </a>
+                            <ul className="dropdown-menu">
+                              <li className="nav-item">
+                                <Link className="nav-link" href="/admin/products">Sản phẩm</Link>
+                              </li>
+                              <li className="nav-item">
+                                <Link className="nav-link" href="/admin/orders">Đơn hàng</Link>
+                              </li>
+                              <li className="nav-item">
+                                <Link className="nav-link" href="/admin">Dashboard</Link>
+                              </li>
+                            </ul>
+                          </li>
+)}
+
+
 
                   {/* <li className="nav-item">
                     <Link className="nav-link" href="/contact">
@@ -141,7 +182,7 @@ export default function Navbar() {
 
                 <ul className="nav navbar-nav navbar-right">
                   <li className="nav-item">
-                    <a href="#" className="cart">
+                    <a href="/orders" className="cart">
                       <span className="ti-bag" />
                     </a>
                   </li>

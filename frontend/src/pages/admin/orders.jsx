@@ -1,61 +1,70 @@
-import React, { useState } from 'react';
-import PageBanner from '../components/PageBanner'; // Tận dụng component Banner có sẵn
+import React, { useState, useEffect } from 'react';
+import PageBanner from '../components/PageBanner';
+import api from '../../utils/axiosConfig';
 
 export default function AdminOrders() {
-  // 1. Dữ liệu mẫu đơn hàng khởi tạo (Mock Data)
-  const [orders, setOrders] = useState([
-    {
-      id: 'ORD-5402',
-      customerName: 'Nguyễn Văn An',
-      createdAt: '20/05/2026',
-      totalPrice: 1350000,
-      status: 'Pending',
-      items: [
-        { name: 'Giày Thể Thao Nam Premium', quantity: 2, price: 550000 },
-        { name: 'Áo Thun Cotton', quantity: 1, price: 250000 }
-      ]
-    },
-    {
-      id: 'ORD-8821',
-      customerName: 'Trần Thị Bích',
-      createdAt: '19/05/2026',
-      totalPrice: 400000,
-      status: 'Processing',
-      items: [
-        { name: 'Balo Thời Trang Hàn Quốc', quantity: 1, price: 400000 }
-      ]
-    },
-    {
-      id: 'ORD-1104',
-      customerName: 'Phạm Minh Hoàng',
-      createdAt: '18/05/2026',
-      totalPrice: 1050000,
-      status: 'Completed',
-      items: [
-        { name: 'Giày Thể Thao Nam Premium', quantity: 1, price: 550000 },
-        { name: 'Balo Thời Trang Hàn Quốc', quantity: 1, price: 400000 },
-        { name: 'Áo Thun Cotton', quantity: 0, price: 250000 } // Fix demo sản phẩm tặng kèm hoặc số lượng khác
-      ]
-    }
-  ]);
-
-  // 2. Các State quản lý Modal xem chi tiết đơn hàng
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // 3. Hàm cập nhật trạng thái đơn hàng (Dropdown Change)
-  const handleStatusChange = (id, newStatus) => {
-    setOrders(orders.map(order => order.id === id ? { ...order, status: newStatus } : order));
-  };
-
-  // 4. Hàm xóa đơn hàng
-  const handleDeleteOrder = (id) => {
-    if (window.confirm(`Bạn có chắc chắn muốn xóa đơn hàng #${id}?`)) {
-      setOrders(orders.filter(order => order.id !== id));
+  // Lấy danh sách đơn hàng từ API
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/orders/admin/all');
+      // Chuyển đổi dữ liệu API sang format giống mock cũ để giữ nguyên giao diện
+      const formattedOrders = res.data.map(order => ({
+        id: order.id,
+        customerName: order.user?.username || 'Khách',
+        createdAt: new Date(order.orderDate).toLocaleDateString('vi-VN'),
+        totalPrice: order.totalAmount,
+        status: order.status,
+        items: order.orderItems.map(item => ({
+          name: item.productName,
+          quantity: item.quantity,
+          price: item.price
+        }))
+      }));
+      setOrders(formattedOrders);
+    } catch (err) {
+      console.error('Lỗi tải đơn hàng:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // 5. Hàm điều khiển Modal chi tiết
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  // Cập nhật trạng thái đơn hàng
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      await api.put(`/orders/${id}/status?status=${newStatus}`);
+      setOrders(prev =>
+        prev.map(order =>
+          order.id === id ? { ...order, status: newStatus } : order
+        )
+      );
+    } catch (err) {
+      console.error('Cập nhật trạng thái thất bại:', err);
+      alert('Cập nhật thất bại, vui lòng thử lại');
+    }
+  };
+
+  // Xóa đơn hàng
+  const handleDeleteOrder = async (id) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa đơn hàng #${id}?`)) return;
+    try {
+      await api.delete(`/orders/${id}`);
+      setOrders(orders.filter(order => order.id !== id));
+    } catch (err) {
+      console.error('Xóa đơn hàng thất bại:', err);
+      alert('Xóa thất bại');
+    }
+  };
+
   const handleOpenDetails = (order) => {
     setSelectedOrder(order);
     setIsModalOpen(true);
@@ -66,33 +75,36 @@ export default function AdminOrders() {
     setIsModalOpen(false);
   };
 
-  // Helper hàm xác định màu sắc hiển thị cho các Trạng thái (Badge style)
   const getStatusBadgeStyle = (status) => {
     switch (status) {
-      case 'Pending': return { background: '#fff3cd', color: '#856404' };      // Vàng nhạt
-      case 'Processing': return { background: '#cce5ff', color: '#004085' };   // Xanh dương nhạt
-      case 'Shipping': return { background: '#e2e3e5', color: '#383d41' };     // Xám nhạt
-      case 'Completed': return { background: '#d4edda', color: '#155724' };    // Xanh lá nhạt
-      case 'Cancelled': return { background: '#f8d7da', color: '#721c24' };    // Đỏ nhạt
+      case 'PENDING': return { background: '#fff3cd', color: '#856404' };
+      case 'PROCESSING': return { background: '#cce5ff', color: '#004085' };
+      case 'SHIPPING': return { background: '#e2e3e5', color: '#383d41' };
+      case 'COMPLETED': return { background: '#d4edda', color: '#155724' };
+      case 'CANCELLED': return { background: '#f8d7da', color: '#721c24' };
       default: return { background: '#eee', color: '#333' };
     }
   };
 
+  if (loading) {
+    return (
+      <>
+        <PageBanner page="Đơn Hàng" header="Quản Lý Đơn Hàng" />
+        <div className="container text-center py-5">Đang tải đơn hàng...</div>
+      </>
+    );
+  }
+
   return (
     <>
       <PageBanner page="Đơn Hàng" header="Quản Lý Đơn Hàng" />
-
       <section className="admin_dashboard_area section_gap">
         <div className="container">
-          
-          {/* Header Tiêu đề cấu trúc giống với trang sản phẩm */}
           <div className="row mb-4">
             <div className="col-12">
               <h3 style={{ color: '#222', fontWeight: '600', margin: 0 }}>Danh sách đơn đặt hàng</h3>
             </div>
           </div>
-
-          {/* Bảng Hiển Thị Đơn Hàng */}
           <div className="row">
             <div className="col-12">
               <div className="table-responsive" style={{ background: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 5px 15px rgba(0,0,0,0.05)' }}>
@@ -116,9 +128,8 @@ export default function AdminOrders() {
                           <td>{order.createdAt}</td>
                           <td>{order.totalPrice.toLocaleString('vi-VN')} đ</td>
                           <td>
-                            {/* Dropdown chỉnh nhanh trạng thái ngay tại dòng dữ liệu */}
-                            <select 
-                              value={order.status} 
+                            <select
+                              value={order.status}
                               onChange={(e) => handleStatusChange(order.id, e.target.value)}
                               style={{
                                 ...getStatusBadgeStyle(order.status),
@@ -131,25 +142,23 @@ export default function AdminOrders() {
                                 outline: 'none'
                               }}
                             >
-                              <option value="Pending">⚠️ Chờ xử lý (Pending)</option>
-                              <option value="Processing">⚙️ Đang xử lý (Processing)</option>
-                              <option value="Shipping">🚚 Đang giao (Shipping)</option>
-                              <option value="Completed">✅ Hoàn thành (Completed)</option>
-                              <option value="Cancelled">❌ Đã hủy (Cancelled)</option>
+                              <option value="PENDING">⚠️ Chờ xử lý (Pending)</option>
+                              <option value="PROCESSING">⚙️ Đang xử lý (Processing)</option>
+                              <option value="SHIPPING">🚚 Đang giao (Shipping)</option>
+                              <option value="COMPLETED">✅ Hoàn thành (Completed)</option>
+                              <option value="CANCELLED">❌ Đã hủy (Cancelled)</option>
                             </select>
                           </td>
                           <td className="text-center">
-                            {/* Nút Xem chi tiết đơn hàng */}
-                            <button 
-                              className="btn btn-sm btn-outline-info mr-2" 
+                            <button
+                              className="btn btn-sm btn-outline-info mr-2"
                               onClick={() => handleOpenDetails(order)}
                               style={{ marginRight: '8px' }}
                             >
                               <i className="lnr lnr-eye"></i> Xem Chi Tiết
                             </button>
-                            {/* Nút Xóa Đơn Hàng */}
-                            <button 
-                              className="btn btn-sm btn-outline-danger" 
+                            <button
+                              className="btn btn-sm btn-outline-danger"
                               onClick={() => handleDeleteOrder(order.id)}
                             >
                               <i className="lnr lnr-trash"></i> Xóa
@@ -167,11 +176,9 @@ export default function AdminOrders() {
               </div>
             </div>
           </div>
-
         </div>
       </section>
 
-      {/* Modal Xem Chi Tiết Đơn Hàng (Tái sử dụng cấu trúc UI của dự án) */}
       {isModalOpen && selectedOrder && (
         <div className="custom-modal-overlay">
           <div className="custom-modal-content" style={{ maxWidth: '600px' }}>
@@ -179,21 +186,17 @@ export default function AdminOrders() {
               <h4 style={{ margin: 0 }}>Chi tiết đơn hàng #{selectedOrder.id}</h4>
               <button className="close-btn" onClick={handleCloseModal}>&times;</button>
             </div>
-            
             <div className="modal-body">
-              {/* Thông tin chung khách hàng */}
               <div className="customer_meta mb-4 p-3" style={{ background: '#f8f9fa', borderRadius: '6px' }}>
                 <p className="mb-1"><strong>Khách hàng:</strong> {selectedOrder.customerName}</p>
                 <p className="mb-1"><strong>Ngày tạo đơn:</strong> {selectedOrder.createdAt}</p>
                 <p className="mb-0">
-                  <strong>Trạng thái hiện tại: </strong> 
+                  <strong>Trạng thái hiện tại: </strong>
                   <span className="badge p-2" style={{ ...getStatusBadgeStyle(selectedOrder.status), borderRadius: '12px' }}>
                     {selectedOrder.status}
                   </span>
                 </p>
               </div>
-
-              {/* Danh sách các sản phẩm có trong đơn hàng */}
               <h5 className="mb-2" style={{ fontWeight: '600' }}>Danh sách vật phẩm</h5>
               <div className="table-responsive mb-3">
                 <table className="table table-bordered">
@@ -219,8 +222,6 @@ export default function AdminOrders() {
                   </tbody>
                 </table>
               </div>
-
-              {/* Tổng thanh toán */}
               <div className="text-right p-2 mb-3" style={{ fontSize: '18px', borderTop: '2px solid #ddd' }}>
                 <strong>Tổng cộng thanh toán: </strong>
                 <span style={{ color: '#ff2f2f', fontWeight: '700', marginLeft: '10px' }}>
@@ -228,8 +229,6 @@ export default function AdminOrders() {
                 </span>
               </div>
             </div>
-
-            {/* Footer Modal đóng nhanh */}
             <div className="text-right mt-4">
               <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>
                 Đóng Cửa Sổ
@@ -239,7 +238,6 @@ export default function AdminOrders() {
         </div>
       )}
 
-      {/* Kế thừa và đồng bộ các Class CSS bổ trợ giống trang quản lý trước */}
       <style jsx>{`
         .text-right { text-align: right; }
         .text-center { text-align: center; }

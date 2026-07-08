@@ -2,5 +2,9 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/": "pages/index.js"
+  "/category": "pages/category.js",
+  "/product_detail": "pages/product_detail.js",
+  "/checkout": "pages/checkout.js",
+  "/cart": "pages/cart.js",
+  "/orders": "pages/orders.js"
 }
